@@ -6,15 +6,17 @@ fn main() {
 
     println!("rectangle is {:#?}", rectangle);
 
-    println!("Area: {}", area(&rectangle));
-}
-
-fn area(rectangle: &Rectangle) -> u32 {
-    rectangle.width * rectangle.height
+    println!("Area: {}", rectangle.area());
 }
 
 #[derive(Debug)]
 struct Rectangle {
     width: u32,
     height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.width * self.height
+    }
 }
