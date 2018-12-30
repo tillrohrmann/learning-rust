@@ -1,6 +1,4 @@
-use std::fmt::Debug;
-
-pub fn quicksort<T: PartialOrd + Debug>(slice: &mut [T]) {
+pub fn quicksort<T: PartialOrd>(slice: &mut [T]) {
     if slice.len() > 2 {
         let mut left= 1;
         let mut right = slice.len() - 1;
@@ -65,11 +63,7 @@ mod tests {
 
         let mut input: Vec<u64> = (0..100).map(|_| rng.gen_range(0, 20)).collect();
 
-        println!("Input {:?}", input);
-
         quicksort(&mut input);
-
-        println!("Output {:?}", input);
 
         assert_sorted(&input);
     }
