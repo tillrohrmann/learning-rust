@@ -1,35 +1,32 @@
 use std::thread;
 use std::time::Duration;
+use std::collections::HashMap;
 
 fn main() {
     let intensity = 7;
     let random_number = 42;
 
     generate_workout(intensity, random_number);
+    generate_workout(intensity + 1, random_number + 1);
 }
 
 struct Cacher<T> where T: Fn(u32) -> u32 {
     calculation: T,
-    value: Option<u32>
+    value: HashMap<u32, u32>,
 }
 
 impl<T> Cacher<T> where T: Fn(u32) -> u32 {
     fn new(calculation: T) -> Cacher<T> {
         Cacher {
             calculation,
-            value: None
+            value: HashMap::new(),
         }
     }
 
     fn value(&mut self, intensity: u32) -> u32 {
-        match self.value {
-            Some(v) => v,
-            None => {
-                let value = (self.calculation)(intensity);
-                self.value = Some(value);
-                value
-            }
-        }
+        let function = &self.calculation;
+        *(self.value.entry(intensity)
+            .or_insert_with(|| function(intensity)))
     }
 }
 
