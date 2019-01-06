@@ -32,14 +32,9 @@ fn search_case_insensitive<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
 }
 
 fn search<'a>(query: &str, content: &'a str) -> Vec<&'a str> {
-    let mut result = Vec::new();
-    for line in content.lines() {
-        if line.contains(query) {
-          result.push(line);
-        }
-    }
-
-    result
+    content.lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 pub struct Config {
@@ -49,13 +44,18 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("Not enough arguments.");
-        }
+    pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
+        args.next();
 
-        let query = args[1].clone();
-        let filename = args[2].clone();
+        let query = match args.next() {
+            Some(v) => v,
+            None => return Err("Didn't get a query.")
+        };
+
+        let filename = match args.next() {
+            Some(v) => v,
+            None => return Err("Didn't get a filename")
+        };
 
         let case_insensitive = env::var("CASE_INSENSITIVE").is_ok();
 
