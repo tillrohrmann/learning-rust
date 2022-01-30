@@ -1,22 +1,41 @@
+use futures::stream::StreamExt;
+use futures::FutureExt;
 use std::fs;
+use std::future::Future;
+use std::ops::Add;
+use std::pin::Pin;
+use std::ptr::null;
+use std::sync::mpsc::{Receiver, SyncSender};
+use std::task::{Context, Poll, RawWaker, Waker};
+use std::thread::JoinHandle;
+use std::time::Instant;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time::Duration;
 use tokio_stream::wrappers::TcpListenerStream;
-use futures::stream::StreamExt;
 
 fn main() {
+    run_async_http_server();
+}
+
+fn run_async_http_server() {
     // let runtime = tokio::runtime::Runtime::new().unwrap();
-    let runtime = tokio::runtime::Builder::new_multi_thread().enable_io().enable_time().worker_threads(3).build().unwrap();
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_io()
+        .enable_time()
+        .worker_threads(3)
+        .build()
+        .unwrap();
     let join_handle = runtime.spawn(async {
         // Listen for incoming TCP connections on localhost port 7878
         let listener = TcpListenerStream::new(TcpListener::bind("127.0.0.1:7878").await.unwrap());
-        listener.for_each_concurrent(None, |tcp_stream| async move {
-            let stream = tcp_stream.unwrap();
-            tokio::spawn(handle_connection(stream));
-        }).await;
+        listener
+            .for_each_concurrent(None, |tcp_stream| async move {
+                let stream = tcp_stream.unwrap();
+                tokio::spawn(handle_connection(stream));
+            })
+            .await;
     });
-
 
     runtime.block_on(join_handle).unwrap();
 }
@@ -36,7 +55,7 @@ async fn handle_connection(mut stream: TcpStream) {
     } else if buffer.starts_with(sleep) {
         // tokio::time::sleep(Duration::from_secs(5)).await;
         println!("Sleeping now :-)");
-        std::thread::sleep(Duration::from_secs(10));
+        tokio::time::sleep(Duration::from_secs(10));
         ("HTTP/1.1 200 OK\r\n\r\n", "hello.html")
     } else {
         ("HTTP/1.1 404 NOT FOUND\r\n\r\n", "404.html")
